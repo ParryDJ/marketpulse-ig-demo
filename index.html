@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090d18">
+<title>MarketPulse AI V2</title>
+<style>
+:root{color-scheme:dark;--bg:#090d18;--panel:#111827;--panel2:#172235;--line:#26344b;--muted:#91a0b7;--text:#edf3ff;--yellow:#f5c542;--green:#31d69a;--red:#ff647c;--blue:#69a8ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 15% 0%,#182640 0,transparent 38%),var(--bg);color:var(--text);font:15px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1180px;margin:auto;padding:22px 18px 50px}.top{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:22px}.brand{display:flex;align-items:center;gap:12px}.logo{width:43px;height:43px;border-radius:13px;background:linear-gradient(135deg,#ffdb67,#ed9e21);display:grid;place-items:center;color:#111;font-weight:900;font-size:21px;box-shadow:0 8px 25px #f5c54230}.brand h1{font-size:20px;margin:0;letter-spacing:.2px}.brand small{color:var(--muted)}.status{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pill{border:1px solid var(--line);border-radius:30px;padding:7px 11px;font-size:12px;color:var(--muted);background:#111827}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:6px}.hero{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-bottom:14px}.panel{background:linear-gradient(145deg,#141f31,#101827);border:1px solid var(--line);border-radius:17px;padding:17px;box-shadow:0 12px 35px #0002}.eyebrow{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:700}.hero h2{font-size:23px;margin:8px 0 5px}.hero p{margin:0;color:var(--muted);font-size:13px}.actions{display:flex;gap:9px;align-items:center;margin-top:17px;flex-wrap:wrap}button{border:0;border-radius:10px;padding:11px 15px;font-weight:750;cursor:pointer;background:var(--yellow);color:#17130a}button.secondary{background:#24334a;color:var(--text);border:1px solid #34445d}button:disabled{opacity:.55;cursor:wait}.metricgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px}.metric{background:#0c1422;border:1px solid #25344a;border-radius:12px;padding:11px}.metric strong{display:block;font-size:20px}.metric span{font-size:11px;color:var(--muted)}.risk h3,.sectionhead h2{margin:0;font-size:16px}.risk label{display:block;color:var(--muted);font-size:12px;margin:13px 0 5px}.risk input{width:100%;background:#0b1320;border:1px solid var(--line);color:var(--text);border-radius:9px;padding:11px;font-size:15px}.riskresult{font-size:22px;font-weight:800;margin-top:12px}.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:25px 2px 12px}.sectionhead span{font-size:12px;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.signal{padding:16px}.signalhead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.signal h3{margin:0;font-size:16px}.epic{font-size:10px;color:var(--muted);overflow-wrap:anywhere;margin-top:3px}.direction{font-size:11px;font-weight:900;letter-spacing:.7px;padding:6px 9px;border-radius:7px;background:#263247;color:#c5d1e4}.direction.LONG{background:#103b32;color:var(--green)}.direction.SHORT{background:#431e2a;color:var(--red)}.direction.UNAVAILABLE{background:#452b17;color:#ffc36a}.price{font-size:23px;font-weight:800;margin:14px 0 2px;font-variant-numeric:tabular-nums}.muted{color:var(--muted);font-size:12px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:13px}.stat{background:#0b1422;border-radius:9px;padding:9px;min-width:0}.stat span{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px}.stat b{display:block;font-size:13px;margin-top:3px;overflow-wrap:anywhere}.score{margin-top:12px}.scoretop{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}.bar{height:6px;background:#26344b;border-radius:10px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:linear-gradient(90deg,#e9a72e,#f5d35c);border-radius:10px}.reason{font-size:12px;color:#c4d0e2;margin-top:12px;min-height:18px}.events{display:flex;flex-direction:column;gap:8px}.event{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px;background:#101a2a;border:1px solid var(--line);border-radius:11px}.event b{font-size:13px}.event small{display:block;color:var(--muted);font-size:11px}.empty{color:var(--muted);padding:18px;text-align:center;border:1px dashed var(--line);border-radius:12px;font-size:13px}.foot{margin-top:22px;color:var(--muted);font-size:11px;text-align:center}.warning{border:1px solid #705b2b;background:#302817;color:#f6d98c;padding:12px 14px;border-radius:12px;font-size:12px;margin-top:15px}
+@media(max-width:720px){.wrap{padding:15px 12px 35px}.top{align-items:flex-start}.hero{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.brand h1{font-size:18px}.status{justify-content:flex-end}.metricgrid{gap:6px}.metric{padding:9px}.metric strong{font-size:17px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+ <div class="brand"><div class="logo">M</div><div><h1>MarketPulse AI <span style="color:var(--yellow)">V2</span></h1><small>Intraday market signal dashboard</small></div></div>
+ <div class="status"><span class="pill"><i class="dot" id="healthDot"></i><span id="connection">Connecting</span></span><span class="pill">IG DEMO · PAPER MODE</span></div>
+</header>
+
+<section class="hero">
+ <div class="panel">
+  <div class="eyebrow">Market overview</div><h2>Trade smarter. Stay disciplined.</h2>
+  <p>Monitor your configured IG markets, review technical setups and calculate a simple cash-risk allowance.</p>
+  <div class="actions"><button id="scanBtn" onclick="manualScan()">↻ Scan markets</button><button class="secondary" onclick="testConnection()">Test IG connection</button><button class="secondary" id="notifyBtn" onclick="enableNotifications()">Enable alerts</button></div>
+  <div class="metricgrid">
+   <div class="metric"><strong id="marketCount">—</strong><span>Markets monitored</span></div>
+   <div class="metric"><strong id="longCount">—</strong><span>Long signals</span></div>
+   <div class="metric"><strong id="shortCount">—</strong><span>Short signals</span></div>
+  </div>
+ </div>
+ <div class="panel risk">
+  <div class="eyebrow">Demo risk calculator</div><h3>Estimate cash at risk</h3>
+  <label for="balance">Account balance (£)</label><input id="balance" type="number" min="0" step="100" value="10000">
+  <label for="riskPct">Risk per trade (%)</label><input id="riskPct" type="number" min="0" max="100" step="0.1" value="1">
+  <div class="riskresult" id="riskCash">£100.00</div><div class="muted">Maximum cash risk at the selected percentage. Not a position-size or contract calculator.</div>
+ </div>
+</section>
+
+<div class="warning">DEMO ONLY — signals are technical indicators, not financial advice or a promise of returns. Setup strength is a heuristic score, not a probability of profit. This dashboard does not place trades.</div>
+
+<div class="sectionhead"><h2>Live signal board</h2><span id="lastScan">Waiting for data…</span></div>
+<div class="grid" id="signals"><div class="empty">Connecting to your MarketPulse server…</div></div>
+
+<div class="sectionhead"><h2>Recent signal alerts</h2><span>Latest 50 from server memory</span></div>
+<div class="events" id="events"><div class="empty">No qualifying signals recorded yet.</div></div>
+<div class="foot">MarketPulse AI V2 · IG Demo API · 5-minute candles · Refreshes automatically</div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+let previousDirections = new Map();
+let polling = false;
+
+function fmt(value, digits=5) {
+ if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
+ return Number(value).toFixed(digits);
+}
+function time(value) {
+ if (!value) return 'Not available';
+ const date = new Date(value);
+ return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+}
+function escapeHtml(value) {
+ return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function card(s) {
+ const direction = s.direction || 'LOADING';
+ const confidence = Math.max(0,Math.min(100,Number(s.confidence)||0));
+ const priceDigits = s.price > 10 ? 2 : 5;
+ return `<article class="panel signal">
+  <div class="signalhead"><div><h3>${escapeHtml(s.name || s.epic || 'Market')}</h3><div class="epic">${escapeHtml(s.epic || '')}</div></div><span class="direction ${direction}">${escapeHtml(direction)}</span></div>
+  <div class="price">${fmt(s.price,priceDigits)}</div><div class="muted">Bid ${fmt(s.bid,priceDigits)} · Ask ${fmt(s.ask,priceDigits)} · Spread ${fmt(s.spread,priceDigits)}</div>
+  <div class="stats">
+   <div class="stat"><span>RSI 14</span><b>${fmt(s.rsi,1)}</b></div>
+   <div class="stat"><span>EMA 9</span><b>${fmt(s.ema9,priceDigits)}</b></div>
+   <div class="stat"><span>EMA 21</span><b>${fmt(s.ema21,priceDigits)}</b></div>
+   <div class="stat"><span>Entry idea</span><b>${fmt(s.entry,priceDigits)}</b></div>
+   <div class="stat"><span>Stop idea</span><b>${fmt(s.stop,priceDigits)}</b></div>
+   <div class="stat"><span>Target idea</span><b>${fmt(s.target,priceDigits)}</b></div>
+  </div>
+  <div class="score"><div class="scoretop"><span>Setup strength · ${escapeHtml(s.confidenceLabel || 'Not scored')}</span><b>${confidence}/100</b></div><div class="bar"><i style="width:${confidence}%"></i></div></div>
+  <div class="reason">${escapeHtml(s.reason || 'Waiting for first scan')}</div>
+  <div class="muted" style="margin-top:8px">5m candle: ${escapeHtml(s.candleTime || '—')} · Updated: ${escapeHtml(time(s.updatedAt))}</div>
+ </article>`;
+}
+function renderEvents(events=[]) {
+ if (!events.length) { $('events').innerHTML='<div class="empty">No qualifying signals recorded yet. The scanner will add entries when its rules are met.</div>'; return; }
+ $('events').innerHTML=events.slice(0,20).map(e=>`<div class="event"><div><b>${escapeHtml(e.name || e.epic)} · <span style="color:${e.direction==='LONG'?'var(--green)':'var(--red)'}">${escapeHtml(e.direction)}</span></b><small>${escapeHtml(e.reason || '')}</small></div><div style="text-align:right"><b>${fmt(e.price,e.price>10?2:5)}</b><small>${escapeHtml(time(e.recordedAt || e.updatedAt))}</small></div></div>`).join('');
+}
+async function refresh() {
+ if (polling) return;
+ polling=true;
+ try {
+  const [healthRes,stateRes]=await Promise.all([fetch('/api/health',{cache:'no-store'}),fetch('/api/state',{cache:'no-store'})]);
+  if (!healthRes.ok || !stateRes.ok) throw new Error('Server returned an error');
+  const health=await healthRes.json(), state=await stateRes.json();
+  $('connection').textContent=health.configured?'Demo connected':'Credentials needed';
+  $('healthDot').style.background=health.configured?'var(--green)':'var(--red)';
+  const signals=state.signals || [];
+  $('marketCount').textContent=signals.length;
+  $('longCount').textContent=signals.filter(s=>s.direction==='LONG').length;
+  $('shortCount').textContent=signals.filter(s=>s.direction==='SHORT').length;
+  $('signals').innerHTML=signals.length?signals.map(card).join(''):'<div class="empty">No markets configured. Add verified IG EPICs to IG_EPICS in Render.</div>';
+  renderEvents(state.events || []);
+  $('lastScan').textContent=state.lastScanAt?'Last scan: '+time(state.lastScanAt):'Waiting for first scan…';
+  for (const s of signals) {
+   const old=previousDirections.get(s.epic);
+   if (old && old!==s.direction && ['LONG','SHORT'].includes(s.direction)) notifySignal(s);
+   previousDirections.set(s.epic,s.direction);
+  }
+ } catch(error) {
+  $('connection').textContent='Server unavailable';
+  $('healthDot').style.background='var(--red)';
+  $('lastScan').textContent=error.message;
+ } finally { polling=false; }
+}
+async function manualScan() {
+ const btn=$('scanBtn'); btn.disabled=true; btn.textContent='Scanning…';
+ try {
+  const response=await fetch('/api/scan',{method:'POST'});
+  if (!response.ok) throw new Error('Scan request failed');
+  await refresh();
+ } catch(e) { alert(e.message); }
+ finally { btn.disabled=false; btn.textContent='↻ Scan markets'; }
+}
+async function testConnection() {
+ try {
+  const response=await fetch('/api/ig/test');
+  const result=await response.json();
+  alert(result.ok?`IG Demo connected. Accounts returned: ${result.accountsReturned}. No orders placed.`:`Connection failed: ${result.error || 'Unknown error'}`);
+  await refresh();
+ } catch(e) { alert('Connection test failed: '+e.message); }
+}
+async function enableNotifications() {
+ if (!('Notification' in window)) { alert('Browser notifications are not supported here.'); return; }
+ const permission=await Notification.requestPermission();
+ $('notifyBtn').textContent=permission==='granted'?'Alerts enabled':'Enable alerts';
+ if(permission==='granted') new Notification('MarketPulse AI',{body:'Browser alerts are enabled while this dashboard is open.'});
+}
+function notifySignal(s) {
+ if ('Notification' in window && Notification.permission==='granted') {
+  new Notification(`MarketPulse ${s.direction}: ${s.name || s.epic}`,{body:`Setup strength ${s.confidence}/100. Review the dashboard before taking any action.`});
+ }
+}
+function calculateRisk() {
+ const balance=Math.max(0,Number($('balance').value)||0);
+ const pct=Math.max(0,Math.min(100,Number($('riskPct').value)||0));
+ $('riskCash').textContent=(balance*pct/100).toLocaleString('en-GB',{style:'currency',currency:'GBP'});
+}
+$('balance').addEventListener('input',calculateRisk);
+$('riskPct').addEventListener('input',calculateRisk);
+calculateRisk();
+refresh();
+setInterval(refresh,15000);
+</script>
+</body>
+</html>
