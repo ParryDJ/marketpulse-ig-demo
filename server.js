@@ -8,6 +8,43 @@ const cfg={riskPct:0.5,maxPositions:2,maxDailyLossPct:2,minScore:70,rr:1.5};
 const executionConfigured=process.env.ENABLE_DEMO_ORDERS==='YES_I_ACCEPT_DEMO_RISK';
 const adminToken=process.env.ADMIN_TOKEN||'';
 const executed=new Set();
+const candleCache=new Map();
+const candleStatus=new Map();
+const CANDLE_MS=300000;
+const HISTORY_BACKOFF_MS=Math.max(60,Number(process.env.HISTORY_403_BACKOFF_MINUTES)||1440)*60000;
+const INITIAL_CANDLES=100;
+const INCREMENTAL_CANDLES=3;
+function isHistoryAllowanceError(e){return String(e?.message||e).includes('exceeded-account-historical-data-allowance')}
+function sleepStatus(epic){const st=candleStatus.get(epic);return st&&st.retryAt>Date.now()?st:null}
+function statusSummary(){return Object.fromEntries([...candleStatus.entries()].map(([epic,st])=>[epic,{status:st.status,retryAt:st.retryAt?new Date(st.retryAt).toISOString():null,lastSuccess:st.lastSuccess||null,candles:candleCache.get(epic)?.length||0}]))}
+function parseCandleTime(p){const raw=p.snapshotTimeUTC||p.snapshotTime;if(!raw)return NaN;const t=Date.parse(raw.replace(' ','T')+(raw.endsWith('Z')?'':'Z'));return t}
+async function getCandles(epic){
+ const now=Date.now(),st=candleStatus.get(epic)||{};
+ if(st.retryAt&&now<st.retryAt)throw Error('Historical allowance exhausted; retry after '+new Date(st.retryAt).toISOString());
+ const cached=candleCache.get(epic)||[];
+ // Never download the same historical candles on every polling cycle.
+ if(cached.length>=30&&st.lastFetch&&now-st.lastFetch<CANDLE_MS)return cached;
+ const count=cached.length>=30?INCREMENTAL_CANDLES:INITIAL_CANDLES;
+ try{
+  const response=await api(`/prices/${encodeURIComponent(epic)}/MINUTE_5/${count}`,'GET',null,'2');
+  const fresh=Array.isArray(response.prices)?response.prices:[];
+  if(!fresh.length)throw Error('IG returned no candles');
+  const merged=new Map();
+  for(const item of [...cached,...fresh]){const key=item.snapshotTimeUTC||item.snapshotTime;if(key)merged.set(key,item)}
+  const candles=[...merged.values()].sort((a,b)=>parseCandleTime(a)-parseCandleTime(b)).slice(-INITIAL_CANDLES);
+  candleCache.set(epic,candles);candleStatus.set(epic,{status:'ready',lastFetch:now,lastSuccess:new Date(now).toISOString(),retryAt:0});
+  return candles;
+ }catch(e){
+  if(isHistoryAllowanceError(e)){
+   const retryAt=now+HISTORY_BACKOFF_MS;
+   candleStatus.set(epic,{...st,status:'allowance-exhausted',retryAt,lastFetch:now});
+   log('IG historical allowance exhausted for '+epic+'; no more price requests until '+new Date(retryAt).toISOString());
+   auto=false;log('Auto trading paused: price data unavailable');
+  }else candleStatus.set(epic,{...st,status:'error',lastFetch:now});
+  throw e;
+ }
+}
+
 function requireAdmin(q,r,next){if(!adminToken)return r.status(503).json({error:'Set ADMIN_TOKEN in Render before enabling control endpoints'});if(q.get('X-Admin-Token')!==adminToken)return r.status(403).json({error:'Admin token required'});next()}
 
 let session=null,auto=false,busy=false,signals=[],activity=[],positions=[],balance=null,baseline=null,baselineDate='',lastScan=null;
@@ -29,7 +66,7 @@ async function login(){
  session={cst,xst};return r.data;
 }
 async function api(path,method='GET',body=null,version='1'){
- if(!session)await login();try{return (await req(path,method,body,version)).data}catch(e){if(String(e.message).includes('401')||String(e.message).includes('403')){session=null;await login();return (await req(path,method,body,version)).data}throw e}
+ if(!session)await login();try{return (await req(path,method,body,version)).data}catch(e){if(String(e.message).includes('401')||String(e.message).includes('error.security.client-token-invalid')){session=null;await login();return (await req(path,method,body,version)).data}throw e}
 }
 const ema=(a,n)=>{let e=a[0],k=2/(n+1);return a.map(x=>(e=x*k+e*(1-k)))};
 function rsi(a,n=14){if(a.length<n+1)return 50;let gain=0,loss=0;for(let i=a.length-n;i<a.length;i++){let d=a[i]-a[i-1];gain+=Math.max(0,d);loss+=Math.max(0,-d)}return loss===0?100:100-100/(1+gain/loss)}
@@ -51,6 +88,7 @@ function sizePrecision(n){return String(n).includes('.')?String(n).split('.')[1]
 async function executeDemo(signal,account){
  if(!executionConfigured)throw Error('Demo order execution not enabled in Render');
  if(signal.direction==='WAIT'||signal.score<cfg.minScore) return;
+ const st=candleStatus.get(signal.epic);if(!st||st.status!=='ready'||Date.now()-st.lastFetch>10*60000)throw Error('Market data is stale; demo order blocked');
  if(!Number.isFinite(balance)||balance<=0||!Number.isFinite(baseline)||baseline<=0)throw Error('Account balance unavailable');
  if(balance<=baseline*(1-cfg.maxDailyLossPct/100)){auto=false;throw Error('Daily balance guard reached; monitoring paused');}
  if(positions.length>=cfg.maxPositions)throw Error('Maximum open positions reached');
@@ -103,13 +141,13 @@ async function executeDemo(signal,account){
    await refreshAccount();
  }catch(e){auto=false;log('ORDER STATUS UNCERTAIN: '+e.message+'; auto paused, inspect IG positions before restarting');throw e}
 }
-async function scan(){if(busy)return;busy=true;try{await refreshAccount();const results=[];for(const epic of epics()){try{const p=await api(`/prices/${encodeURIComponent(epic)}/MINUTE_5/100`,'GET',null,'2');results.push(analyse(epic,p.prices))}catch(e){results.push({epic,direction:'ERROR',score:0,reason:e.message});log(`Scan ${epic}: ${e.message}`)}}signals=results;lastScan=new Date().toISOString();if(auto){for(const sig of results){if(!auto)break;if(sig.direction==='LONG'||sig.direction==='SHORT'){try{const a=await refreshAccount();await executeDemo(sig,a)}catch(e){log('Skipped/paused '+sig.epic+': '+e.message)}}}}}catch(e){log('Scan failed: '+e.message)}finally{busy=false}}
-app.get('/api/health',(q,s)=>s.json({ok:true,version:'3.1.0',accountType:'DEMO',orderExecutionEnabled:executionConfigured}));
-app.get('/api/state',(q,s)=>s.json({version:'3.1.0',auto,orderExecutionEnabled:executionConfigured,cfg,signals,activity,positions,balance,baseline,baselineDate,lastScan,busy}));
+async function scan(){if(busy)return;busy=true;try{await refreshAccount();const results=[];for(const epic of epics()){try{const candles=await getCandles(epic);results.push(analyse(epic,candles))}catch(e){results.push({epic,direction:'ERROR',score:0,reason:e.message});log(`Scan ${epic}: ${e.message}`)}}signals=results;lastScan=new Date().toISOString();if(auto&&results.some(sig=>sig.direction==='ERROR')){auto=false;log('Auto trading paused: one or more market data errors')}if(auto){for(const sig of results){if(!auto)break;if(sig.direction==='LONG'||sig.direction==='SHORT'){try{const a=await refreshAccount();await executeDemo(sig,a)}catch(e){log('Skipped/paused '+sig.epic+': '+e.message)}}}}}catch(e){log('Scan failed: '+e.message)}finally{busy=false}}
+app.get('/api/health',(q,s)=>s.json({ok:true,version:'3.2.0',accountType:'DEMO',orderExecutionEnabled:executionConfigured,history:statusSummary()}));
+app.get('/api/state',(q,s)=>s.json({version:'3.2.0',auto,orderExecutionEnabled:executionConfigured,cfg,signals,activity,positions,balance,baseline,baselineDate,lastScan,busy,history:statusSummary()}));
 app.get('/api/ig/test',async(q,s)=>{try{await login();const a=await api('/accounts');s.json({ok:true,authenticated:true,accountsReturned:a.accounts?.length||0,note:'No orders placed'})}catch(e){s.status(502).json({ok:false,error:e.message})}});
 app.get('/api/ig/search',async(q,s)=>{try{const term=String(q.query.term||'EUR/USD').slice(0,60);s.json(await api('/markets?searchTerm='+encodeURIComponent(term)))}catch(e){s.status(502).json({error:e.message})}});
 app.post('/api/scan',requireAdmin,async(q,s)=>{await scan();s.json({ok:true,signals,lastScan})});
 app.post('/api/auto',requireAdmin,async(q,s)=>{if(q.body?.enabled&&!executionConfigured)return s.status(409).json({error:'Demo order execution locked; see README'});auto=q.body?.enabled===true;log(auto?'IG DEMO automatic orders ARMED':'IG DEMO automatic orders PAUSED (existing positions remain open)');s.json({ok:true,auto,orderExecutionEnabled:executionConfigured})});
 app.get('*',(q,s)=>s.sendFile(require('path').join(__dirname,'public','index.html')));
-const port=process.env.PORT||3000;app.listen(port,()=>{log('V3.1 started: '+(executionConfigured?'DEMO orders configured; starts PAUSED':'DEMO orders LOCKED'));console.log('MarketPulse V3 on',port)});
-setInterval(()=>scan().catch(e=>log(e.message)),Math.max(30,Number(process.env.POLL_SECONDS)||60)*1000);setTimeout(()=>scan().catch(e=>log(e.message)),3000);
+const port=process.env.PORT||3000;app.listen(port,()=>{log('V3.2 started: '+(executionConfigured?'DEMO orders configured; starts PAUSED':'DEMO orders LOCKED'));console.log('MarketPulse V3.2 on',port)});
+setInterval(()=>scan().catch(e=>log(e.message)),Math.max(300,Number(process.env.POLL_SECONDS)||300)*1000);setTimeout(()=>scan().catch(e=>log(e.message)),3000);
